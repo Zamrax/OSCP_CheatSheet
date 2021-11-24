@@ -1,4 +1,4 @@
-# Welcome to DigitalDefence Cheat Sheet for OSCP
+# DigitalDefence Cheat Sheet for OSCP
 
 ## Enumeration:
 
@@ -622,3 +622,4 @@
 	evil-winrm -i <IP> -u <USER> -p <PASSWORD>
 	evil-winrm -i <IP> -u <USER> -H <HASH>
 	```
+
