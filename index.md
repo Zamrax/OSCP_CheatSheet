@@ -167,6 +167,8 @@
 	wpscan --rua -e --url IP/URL
 	\# Brute force users/login
 	wpscan --rua --url IP/URL -P /usr/share/wordlists/rockyou.txt -U "USER,USER"
+	\# Plugin and theme enumeration
+	wpscan --url URL --enumerate ap,at --plugins-detection mixed
 	```
 - _Theme RCE_
 	```
@@ -180,7 +182,7 @@
 4. **Drupal**
 - _Enumeration_
 	```
-	droopescan scan -u IP/URL
+	python3 drupwn --mode enum --target URL
 	```
 - _User Enumeration_
 	```
