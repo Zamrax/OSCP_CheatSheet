@@ -18,6 +18,10 @@
 	```
 	enum4linux -a IP
 	```
+5. wfuzz
+	```
+	wfuzz -c -z range,1-65535 --hl=2 http://IP:PORT/url.php?path=FUZZ
+	```
 
 ## Port Enumeration and Potential Exploits:
 
