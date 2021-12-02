@@ -21,6 +21,7 @@
 5. wfuzz
 	```
 	wfuzz -c -z range,1-65535 --hl=2 http://IP:PORT/url.php?path=FUZZ
+	wfuzz -w /usr/share/wordlists/wfuzz/Injections/All_attack.txt http://IP:PORT/index.html?parameter=FUZZ
 	```
 
 ## Port Enumeration and Potential Exploits:
