@@ -720,3 +720,72 @@ Internet traffic on port 80 redirection from Kali to Victim
 	```
 
 ### Active Directory 
+1. Leveraging net.exe
+	```
+	\# Enumerate local accounts
+	net user
+	net user /domain
+	net user user /domain
+	net group /domain
+	```
+	
+2. Lightweight Directory Access Protocol (LDAP)
+	```
+	LDAP://HostName[:PortNumber][/DistinbuisedName]
+	[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$SearchString
+	
+	LDAP://DC01.corp.com/DC=corp,DC=com
+	
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry($SearchString,
+	"corp.com\offsec", "lab")
+	$Searcher.SearchRoot = $objDomain
+	
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="samAccountType=805306368"
+	$Searcher.FindAll()
+	
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="samAccountType=805306368"
+	$Result = $Searcher.FindAll()
+	Foreach($obj in $Result)
+	{
+		Foreach($prop in $obj.Properties)
+		{
+			$prop
+		}
+		Write-Host "------------------------"
+	}
+	
+	$Searcher.filter="name=Jeff_Admin"
+	```
