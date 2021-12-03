@@ -717,6 +717,6 @@ Internet traffic on port 80 redirection from Kali to Victim
 	\# Confirm
 	ps aux | grep htc
 	ss- antp | grep "8080"
-	
-### Active Directory 
 	```
+
+### Active Directory 
