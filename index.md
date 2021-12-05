@@ -1642,36 +1642,50 @@ Internet traffic on port 80 redirection from Kali to Victim
 
 ## Useful Linux Commands
 ### Find a file
+
 	```
 	locate <FILE>
 	find / -name "<FILE>"
 	```
+	
 ### Active connection
+
 	```
 	netstat -lntp
 	```
+	
 ### List all SUID files
+
 	```
 	find / -perm -4000 2>/dev/null
 	```
+	
 ### Determine the current version of Linux
+	
 	```
 	cat /etc/issue
 	```
+	
 ### Determine more information about the environment
+	
 	```
 	uname -a
 	```
+	
 ### List processes running
+	
 	```
 	ps -faux
 	```
+	
 ### List the allowed (and forbidden) commands for the invoking use
+	
 	```
 	sudo -l
 	```
 	
 ## Useful Windows Commands
+	
 	```
 	net config Workstation
 	systeminfo
@@ -1695,29 +1709,38 @@ Internet traffic on port 80 redirection from Kali to Victim
 	```
 	
 ### Disable windows defender
+	
 	```
 	sc stop WinDefend
 	```
+	
 ### Bypass restrictions
+	
 	```
 	powershell -nop -ep bypass
 	```
+	
 ### List hidden files
+	
 	```
 	dir /a
 	```
+	
 ### Find a file
+	
 	```
 	dir /b/s "<FILE>"
 	```
 	
 ## Get Proofs for OSCP exam
 ### Linux
+	
 	```
 	echo " ";echo "uname -a:";uname -a;echo " ";echo "hostname:";hostname;echo " ";echo "id";id;echo " ";echo "ifconfig:";/sbin/ifconfig -a;echo " ";echo "proof:";cat /root/proof.txt 2>/dev/null; cat /Desktop/proof.txt 2>/dev/null;echo " "
 	```
 
 ### Windows
+	
 	```
 	echo. & echo. & echo whoami: & whoami 2> nul & echo %username% 2> nul & echo. & echo Hostname: & hostname & echo. & ipconfig /all & echo. & echo proof.txt: &  type "C:\Documents and Settings\Administrator\Desktop\proof.txt"
 	```
