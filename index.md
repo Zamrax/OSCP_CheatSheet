@@ -1041,20 +1041,20 @@ Do not forget if availabe: ``` powershell -ep bypass ```
 
 ### New Host Discover
 
-	```
-	netdiscover
-	ip a
-	ip neigh
-	hosts
-	```
+```
+netdiscover
+ip a
+ip neigh
+hosts
+```
 
 ### Port Forwarding
 Do not forget to to check /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
 
-	```
-	cat /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
-	/root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
-	```
+```
+cat /root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+/root/port_forwarding_and_tunneling/ssh_renote_port_forwarding.sh
+```
 	
 1. **RINETD**
 Internet traffic on port 80 redirection from Kali to Victim
@@ -1645,104 +1645,104 @@ Internet traffic on port 80 redirection from Kali to Victim
 ## Useful Linux Commands
 ### Find a file
 
-	```
-	locate <FILE>
-	find / -name "<FILE>"
-	```
+```
+locate <FILE>
+find / -name "<FILE>"
+```
 	
 ### Active connection
 
-	```
-	netstat -lntp
-	```
+```
+netstat -lntp
+```
 	
 ### List all SUID files
 
-	```
-	find / -perm -4000 2>/dev/null
-	```
+```
+find / -perm -4000 2>/dev/null
+```
 	
 ### Determine the current version of Linux
 	
-	```
-	cat /etc/issue
-	```
+```
+cat /etc/issue
+```
 	
 ### Determine more information about the environment
-	
-	```
-	uname -a
-	```
+
+```
+uname -a
+```
 	
 ### List processes running
 	
-	```
-	ps -faux
-	```
+```
+ps -faux
+```
 	
 ### List the allowed (and forbidden) commands for the invoking use
 	
-	```
-	sudo -l
-	```
+```
+sudo -l
+```
 	
 ## Useful Windows Commands
 	
-	```
-	net config Workstation
-	systeminfo
-	net users
+```
+net config Workstation
+systeminfo
+net users
 
-	ipconfig /all
-	netstat -ano
+ipconfig /all
+netstat -ano
 
-	schtasks /query /fo LIST /v
-	tasklist /SVC
-	net start
-	DRIVERQUERY
+schtasks /query /fo LIST /v
+tasklist /SVC
+net start
+DRIVERQUERY
 
-	reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
-	reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
+reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer\AlwaysInstallElevated
 
-	dir /s pass == cred == vnc == .config
-	findstr /si password *.xml *.ini *.txt
-	reg query HKLM /f password /t REG_SZ /s
-	reg query HKCU /f password /t REG_SZ /s
-	```
+dir /s pass == cred == vnc == .config
+findstr /si password *.xml *.ini *.txt
+reg query HKLM /f password /t REG_SZ /s
+reg query HKCU /f password /t REG_SZ /s
+```
 	
 ### Disable windows defender
 	
-	```
-	sc stop WinDefend
-	```
+```
+sc stop WinDefend
+```
 	
 ### Bypass restrictions
 	
-	```
-	powershell -nop -ep bypass
-	```
+```
+powershell -nop -ep bypass
+```
 	
 ### List hidden files
 	
-	```
-	dir /a
-	```
+```
+dir /a
+```
 	
 ### Find a file
 	
-	```
-	dir /b/s "<FILE>"
-	```
+```
+dir /b/s "<FILE>"
+```
 	
 ## Get Proofs for OSCP exam
 ### Linux
 	
-	```
-	echo " ";echo "uname -a:";uname -a;echo " ";echo "hostname:";hostname;echo " ";echo "id";id;echo " ";echo "ifconfig:";/sbin/ifconfig -a;echo " ";echo "proof:";cat /root/proof.txt 2>/dev/null; cat /Desktop/proof.txt 2>/dev/null;echo " "
-	```
+```
+echo " ";echo "uname -a:";uname -a;echo " ";echo "hostname:";hostname;echo " ";echo "id";id;echo " ";echo "ifconfig:";/sbin/ifconfig -a;echo " ";echo "proof:";cat /root/proof.txt 2>/dev/null; cat /Desktop/proof.txt 2>/dev/null;echo " "
+```
 
 ### Windows
 	
-	```
-	echo. & echo. & echo whoami: & whoami 2> nul & echo %username% 2> nul & echo. & echo Hostname: & hostname & echo. & ipconfig /all & echo. & echo proof.txt: &  type "C:\Documents and Settings\Administrator\Desktop\proof.txt"
-	```
+```
+echo. & echo. & echo whoami: & whoami 2> nul & echo %username% 2> nul & echo. & echo Hostname: & hostname & echo. & ipconfig /all & echo. & echo proof.txt: &  type "C:\Documents and Settings\Administrator\Desktop\proof.txt"
+```
